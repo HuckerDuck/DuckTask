@@ -1,63 +1,151 @@
-# EnterPrice Todo App — Backend
+# EnterPrice - Todo Backend
 
-A Spring Boot backend built as part of a school assignment at STI (Stockholm Technical Institute).  
-This works towards a Frontend built in React. 
+A school assignment I built to practice enterprise-level backend development.
+A REST API for managing todo tasks with user roles, JWT auth, RabbitMQ messaging and Docker.
+
+> **Note:** All code is written by me. I used AI to help structure this README, but reviewed and approved README myself.
+
+---
+
+## What is this?
+
+This was a school assignment focused on building a more "enterprise-style" backend.
+The goal was to go beyond a basic CRUD app and work with things like message queues, roles and permissions, and containerization.
+
+Still a work in progress, but the core features are working.
+
+---
+
+## Tech
+
+- Java 17 + Spring Boot
+- Spring Security + JWT
+- MySQL + Spring Data JPA
+- RabbitMQ (message queue)
+- Docker + Docker Compose
+- Lombok, MapStruct
+- Gradle
 
 ---
 
 ## Features
 
-### Security & Authentication
-- JWT-based authentication (HttpOnly cookie)
-- Login, Register & Logout endpoints
-- BCrypt password hashing
-- Role & permission-based access (USER / ADMIN)
-- Stateless sessions (JWT only)
-- Input validation on DTOs
-- Centralized exception handling
+**Tasks (DuckTasks)**
+- Full CRUD on todo tasks
+- Each task has a title, description, priority and completed status
+- Tasks use UUID as ID
+- Timestamps set automatically on create and update
+- Tasks are tied to the logged-in user
 
-### Task Management
-- Create, Read, Update, Delete tasks
-- Users can only manage their own tasks
+**Users (Ducks)**
+- Register and login
+- Roles: USER and ADMIN
+- Permissions: READ, WRITE, DELETE
+- JWT stored and validated on every request
 
-### Architecture & Deployment
-- Built with Spring Boot & Java 
-- Database connected via JPA/Hibernate
-- Docker support (runs via `docker compose`)
-- RabbitMQ integration prepared (event messaging)
-- Uses Flyway for Database Migration
+**Messaging**
+- RabbitMQ queue for email notifications
+- When a task event happens, a message is sent to `email-queue`
+- EmailConsumer listens and handles the message
 
 ---
 
-## Tech Stack
+## Endpoints
 
-| Layer | Technology |
-|------|------------|
-| Backend | Spring Boot|
-| Auth | JWT | CORS |
-| Database | PostgreSQL |
-| Messaging | RabbitMQ |
-| Deployment | Docker & Docker Compose |
+### Tasks `/api/ducktasks`
 
----
+```
+POST   /api/ducktasks                      - create task
+GET    /api/ducktasks                      - get all tasks (current user)
+GET    /api/ducktasks/{id}                 - get task by id
+PUT    /api/ducktasks/update/{id}          - update task
+DELETE /api/ducktasks/delete/{id}          - delete task
+PATCH  /api/ducktasks/completedtask/{id}   - mark task as completed
+```
 
-## API Overview
+### Auth `/api/auth`
 
-| Endpoint | Method | Description |
-|---------|-------|-------------|
-| `/api/auth/register` | POST | Register a new user |
-| `/api/auth/login` | POST | Authenticate and set JWT cookie |
-| `/api/auth/logout` | POST | Clear auth cookie |
-| `/api/ducktasks` | GET | Fetch user tasks (requires auth) |
-| `/api/ducktasks` | POST | Create task (requires auth) |
-| `/api/ducktasks/update/{taskId}` | PUT | Update specific task |
-| `/api/ducktasks/delete/{taskId}` | DELETE | Delete specific task |
-
-> All `/api/ducktasks/**` endpoints require a valid JWT cookie.
+```
+POST   /api/auth/register
+POST   /api/auth/login
+```
 
 ---
 
-### Run with Docker 
+## Project Structure
+
+```
+src/
+├── advice/                  # Global validation error handling
+├── config/
+│   └── RabbitConfig.java    # RabbitMQ queue, exchange, binding
+├── consumer/
+│   └── EmailConsumer.java   # Listens to email-queue
+├── security/
+│   ├── jwt/                 # JWT filter + utils
+│   ├── corsConfig/
+│   └── controller/          # Auth endpoints
+├── todo_item/
+│   ├── controller/
+│   ├── service/
+│   ├── repository/
+│   ├── model/               # DuckTask entity
+│   ├── dto/
+│   ├── mapper/
+│   ├── enums/               # ToDoPriority
+│   └── exceptions/
+└── user/
+    ├── controller/
+    ├── service/
+    ├── repository/
+    ├── model/               # Duck (user) entity
+    ├── dto/
+    ├── mapper/
+    ├── enums/               # DuckRoles, DuckPermissions
+    └── exceptions/
+```
+
+---
+
+## Run with Docker
+
+The easiest way to run this project is with Docker Compose.
+It will start both the backend and RabbitMQ automatically.
 
 ```bash
-docker compose up --build
+git clone https://github.com/your-username/enterprice-todo-backend.git
+cd enterprice-todo-backend
+```
+
+Copy the env example and fill in your database details:
+
+```bash
+cp .env_example .env
+```
+
+Start everything:
+
+```bash
+docker-compose up --build
+```
+
+API runs on `http://localhost:8080`
+RabbitMQ dashboard runs on `http://localhost:15672` (guest / guest)
+
+---
+
+## Run without Docker
+
+You need Java 17+, MySQL and Gradle.
+
+Configure `.env` with your database credentials, then:
+
+```bash
+./gradlew bootRun
+```
+
+---
+
+## Author
+
+Fredrik — Java developer student based in Stockholm.
